@@ -102,3 +102,24 @@ REGISTER_LITE_KERNEL(crop, kHost, kInt32, kAny, crop_int32, def)
                                        PRECISION(kInt32),
                                        DATALAYOUT(kAny))})
     .Finalize();
+
+using crop_float_to_int32 =
+    paddle::lite::kernels::host::CropCompute<float, PRECISION(kFloat)>;
+REGISTER_LITE_KERNEL(crop, kHost, kFloat, kAny, crop_float_to_int32, float_int32)
+    .BindInput("X",
+               {LiteType::GetTensorTy(TARGET(kHost),
+                                      PRECISION(kFloat),
+                                      DATALAYOUT(kAny))})
+    .BindInput("Y",
+               {LiteType::GetTensorTy(TARGET(kHost),
+                                      PRECISION(kFloat),
+                                      DATALAYOUT(kAny))})
+    .BindInput("Offsets",
+               {LiteType::GetTensorTy(TARGET(kHost),
+                                      PRECISION(kFloat),
+                                      DATALAYOUT(kAny))})
+    .BindOutput("Out",
+                {LiteType::GetTensorTy(TARGET(kHost),
+                                       PRECISION(kInt32),
+                                       DATALAYOUT(kAny))})
+    .Finalize();
