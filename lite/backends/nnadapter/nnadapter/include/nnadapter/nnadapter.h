@@ -412,7 +412,7 @@ typedef enum {
    * * 0 ~ n-1: input0 ~ inputn-1, a NNADAPTER_FLOAT32,
    * NNADAPTER_QUANT_INT8_SYMM_PER_LAYER tensor.
    * * 1: axis, a NNADAPTER_INT32 tensor of shape [1], represents the
-   * dimension along which softmax will be performed, should be in range [-R,
+   * dimension along which concat will be performed, should be in range [-R,
    * R), where R is the rank of `input`, negative value works the same way as
    * `axis`+R, defaults to -1.
    *
@@ -541,13 +541,28 @@ typedef enum {
   NNADAPTER_CONV_2D_TRANSPOSE,
 
   /**
+   * Performs element-wise cosine calculation.
+   * The output is calculated using this formula: `output` = cos(`input`)
+   *
+   * Inputs:
+   * * 0: input, a NNADAPTER_FLOAT32,
+   * NNADAPTER_QUANT_INT8_SYMM_PER_LAYER tensor.
+   *
+   * Outputs:
+   * * 0: output, a tensor of the same shape and type as `input`.
+   *
+   * Available since version 1.
+   */
+  NNADAPTER_COS,
+
+  /**
    * Performs cumulative sum of the input elements along the given `axis`.
    *
    * Inputs:
    * * 0: input, a NNADAPTER_FLOAT32,
    * NNADAPTER_QUANT_INT8_SYMM_PER_LAYER tensor.
    * * 1: axis, a NNADAPTER_INT32 tensor of shape [1], represents the
-   * dimension along which softmax will be performed, should be in range [-R,
+   * dimension along which cum_sum will be performed, should be in range [-R,
    * R), where R is the rank of input, negative value works the same way as
    * `axis`+R, defaults to -1.
    * * 2: exclusive, a NNADAPTER_BOOL8 tensor of shape [1], whether to exclude
@@ -785,6 +800,28 @@ typedef enum {
   NNADAPTER_FLOOR,
 
   /**
+   * Performs element-wise binary floor divide(with Numpy-style broadcasting
+   * https://numpy.org/doc/stable/user/basics.broadcasting.html).
+   * The output is calculated using this formula:
+   *      `output` = floor (`input0` / `input1`)
+   * Inputs:
+   * * 0: input0, a NNADAPTER_FLOAT32, NNADAPTER_QUANT_INT8_SYMM_PER_LAYER
+   * tensor.
+   * * 1: input1, a tensor of the compatible shape and the same type as
+   * `input0`.
+   * * 2: fuse_code, a NNADAPTER_INT32 tensor of shape [1], specifies the
+   * activation to the
+   * result, must be one of NNAdapterFuseCode values.
+   *
+   * Outputs:
+   * * 0: output, a tensor of the compatible shape and type as `input0` and
+   * `input1`.
+   *
+   * Available since version 1.
+   */
+  NNADAPTER_FLOOR_DIV,
+
+  /**
    * Add a fully connected layer.
    * The output is calculated using this formula:
    *     `output` = activation(`input` * `weight`' + `bias`)
@@ -832,7 +869,7 @@ typedef enum {
    * the values must be in the bounds of the corresponding dimensions of
    * `input`.
    * * 2: axis, a NNADAPTER_INT32 tensor of shape [1], represents the
-   * dimension along which softmax will be performed, should be in range [-R,
+   * dimension along which gather will be performed, should be in range [-R,
    * R), where R is the rank of input, negative value works the same way as
    * `axis`+R, defaults to -1.
    *
@@ -1127,7 +1164,8 @@ typedef enum {
    * * 0: input, a NNADAPTER_FLOAT32, NNADAPTER_QUANT_INT8_SYMM_PER_LAYER
    * tensor.
    * * 1: axis, a NNADAPTER_INT32 tensor of shape [1], represents the
-   * dimension along which softmax will be performed, should be in range [-R,
+   * dimension along which log_softmax will be performed, should be in range
+   * [-R,
    * R), where R is the rank of `input`, negative value works the same way as
    * `axis`+R.
    *
@@ -1148,9 +1186,9 @@ typedef enum {
    * * 0: input, a NNADAPTER_FLOAT32,
    * NNADAPTER_QUANT_INT8_SYMM_PER_LAYER tensor.
    * * 1: axis, a NNADAPTER_INT32 tensor of shape [1], represents the
-   * dimension along which softmax will be performed, should be in range [-R,
-   * R), where R is the rank of input, negative value works the same way as
-   * `axis`+R, defaults to 1.
+   * dimension along which lp_normalization will be performed, should be in
+   * range [-R, R), where R is the rank of input, negative value works the same
+   * way as `axis`+R, defaults to 1.
    * * 2: p, a NNADAPTER_INT32 tensor of shape [1], represents the exponent
    * value in the formula, only 1 or 2 is supported, defaults to 2.
    * * 3: epsilon, a NNADAPTER_FLOAT32 tensor of shape [1], a small value added
@@ -1757,6 +1795,21 @@ typedef enum {
    * Available since version 1.
    */
   NNADAPTER_SIGMOID,
+
+  /**
+   * Performs element-wise sine calculation.
+   * The output is calculated using this formula: `output` = sin(`input`)
+   *
+   * Inputs:
+   * * 0: input, a NNADAPTER_FLOAT32,
+   * NNADAPTER_QUANT_INT8_SYMM_PER_LAYER tensor.
+   *
+   * Outputs:
+   * * 0: output, a tensor of the same shape and type as `input`.
+   *
+   * Available since version 1.
+   */
+  NNADAPTER_SIN,
 
   /**
    * Produces a slice of `input` along multiple axes. Similar to numpy:

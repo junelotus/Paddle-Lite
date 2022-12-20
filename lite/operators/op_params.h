@@ -262,7 +262,6 @@ struct SoftmaxParam : ParamBase {
   lite::Tensor* x{};
   lite::Tensor* output{};
   int axis{-1};
-  bool use_cudnn{true};
   bool eleminate_success{false};
 };
 
@@ -418,19 +417,6 @@ struct ConvParam : ParamBase {
   std::vector<int> output_size;
   std::vector<int> output_padding;
 
-#ifdef LITE_WITH_FPGA
-  lite::Tensor* scale{nullptr};
-  struct StrideInfo {
-    bool wd_enable_ = false;
-    int wd_offset_ = -1;
-    int fuse_idx_ = -1;
-    int original_out_channel_ = -1;
-    int start_idx_ = 0;
-    int end_idx_ = 0;
-  };
-  StrideInfo stride_info_;
-#endif
-
   // for int8
   WITH_INT8_CONFIG
   // for Conv2d+Scale fusion
@@ -465,7 +451,7 @@ struct PoolParam : ParamBase {
   std::vector<int> ksize{};
   bool global_pooling{
       false};  // if true, knernel size and paddings will be ignored
-  std::vector<int> strides{1, 1};
+  std::vector<int> strides;
   /* paddings type change
    * from std::vector<int> to std::shared_ptr<std::vector<int>>
    * to support dynamically modify padding
@@ -679,6 +665,12 @@ struct QuantizeLinearParam : ParamBase {
   lite::Tensor* y{};
   int quant_axis;
   int bit_length;
+};
+
+struct QuantizeLogParam : ParamBase {
+  const lite::Tensor* X{};
+  const lite::Tensor* Dict{};
+  lite::Tensor* Out{};
 };
 
 /// ----------------------- sgd operators ----------------------
@@ -1737,6 +1729,7 @@ struct XPUMultiEncoderParam : ParamBase {
   std::vector<lite::Tensor*> fc_bias;
   std::vector<lite::Tensor*> ln_scale;
   std::vector<lite::Tensor*> ln_bias;
+  std::vector<lite::Tensor*> roformer_embedding;
   const lite::Tensor* mask{nullptr};
   const lite::Tensor* SeqLod{nullptr};
   const lite::Tensor* PadSeqLen{nullptr};
@@ -1753,7 +1746,10 @@ struct XPUMultiEncoderParam : ParamBase {
   int head_num{};
   int size_per_head{};
   int hidden_dim{};
+  int ffn_hidden_dim_scale{4};
   std::string act_type{};
+  int relative_type{0};
+  int max_pos_len{512};  // relative embedding [max_pos_len, head_dim]
   std::string precision{};
   bool enable_qkv_fusion{false};
   bool norm_before{false};
@@ -1769,6 +1765,12 @@ struct XPUEmbeddingWithEltwiseAddParam : ParamBase {
   lite::Tensor* PadSeqLen{nullptr};
   lite::Tensor* Out{nullptr};
   int64_t padding_idx{-1};
+  int mask_dtype{static_cast<int>(VarDescAPI::VarDataType::FP32)};
+};
+
+struct XPUQuickGeluParam : ParamBase {
+  const lite::Tensor* X{};
+  lite::Tensor* Out{};
 };
 
 struct XPUFcParam : ParamBase {
@@ -1795,6 +1797,15 @@ struct XPUFcParam : ParamBase {
   float quant_input_max{0.f};
   float quant_output_max{0.f};
   bool per_channel{false};
+  float alpha{1.0f};
+};
+
+struct XPURoformerRelativeEmbeddingParam : ParamBase {
+  lite::Tensor* input{nullptr};
+  lite::Tensor* cos_embedding{nullptr};
+  lite::Tensor* sin_embedding{nullptr};
+  lite::Tensor* output{nullptr};
+  int max_pos_len{512};
 };
 
 struct XPUResNetCbamParam : ParamBase {
@@ -2290,6 +2301,39 @@ struct RollParam : ParamBase {
   lite::Tensor* Out{};
   std::vector<int64_t> shifts{};
   std::vector<int64_t> axis{};
+};
+
+struct SetValueParam : ParamBase {
+  const lite::Tensor* Input{};
+  const lite::Tensor* ValueTensor{};
+  std::vector<const lite::Tensor*> StartsTensorList{};
+  std::vector<const lite::Tensor*> EndsTensorList{};
+  std::vector<const lite::Tensor*> StepsTensorList{};
+  lite::Tensor* Out{};
+  int dtype{5};
+  std::vector<int64_t> axes{};
+  std::vector<int64_t> starts{};
+  std::vector<int64_t> ends{};
+  std::vector<int64_t> steps{};
+  std::vector<int64_t> decrease_axes{};
+  std::vector<int64_t> none_axes{};
+  std::vector<int> bool_values{};
+  std::vector<float> fp32_values{};
+  std::vector<int> int32_values{};
+  std::vector<int64_t> int64_values{};
+  std::vector<double> fp64_values{};
+  std::vector<float> fp16_values{};
+  std::vector<int64_t> shape{};
+};
+
+struct ShareDataParam : ParamBase {
+  const lite::Tensor* X{};
+  lite::Tensor* Out{};
+};
+
+struct RoundParam : ParamBase {
+  const lite::Tensor* X{};
+  lite::Tensor* Out{};
 };
 
 }  // namespace operators
